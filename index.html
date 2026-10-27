@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Tech Asset Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* Layout: floating navy navigation panel on the left, one scrolling workspace on the right.
+   Colour: Sierra Leone flag green and blue appear only in the flag stripe; the UI accent is a clear signal blue. */
+:root{
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  --font-tag:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --bg:#edf1f6;--surface:#ffffff;--surface-2:#f5f8fb;--ink:#0e1b2c;--muted:#5b697e;--line:#dce4ee;
+  --accent:#0a6fd0;--accent-ink:#ffffff;--accent-soft:#e1eefc;
+  --nav:#0e1b2c;--nav-ink:#c6d2e5;--nav-hover:#193250;
+  --ok:#14804a;--ok-soft:#dcf2e6;--warn:#a85d00;--warn-soft:#fcebd0;--bad:#c42b1f;--bad-soft:#fbe2df;--idle:#5b697e;--idle-soft:#e7ecf3;
+  --flag-g:#1eb53a;--flag-w:#ffffff;--flag-b:#0072c6;
+  --shadow:0 1px 2px rgba(14,27,44,.06),0 10px 28px rgba(14,27,44,.07);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#09111c;--surface:#111d2e;--surface-2:#0d1726;--ink:#e8eef8;--muted:#93a1b8;--line:#1f2f46;
+  --accent:#4aa3ff;--accent-ink:#04101f;--accent-soft:#12304f;
+  --nav:#060d17;--nav-ink:#a9b7cf;--nav-hover:#112038;
+  --ok:#3ccf7a;--ok-soft:#10301f;--warn:#f0a23a;--warn-soft:#3a280c;--bad:#ff6b5e;--bad-soft:#3d1512;--idle:#93a1b8;--idle-soft:#1a283d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#09111c;--surface:#111d2e;--surface-2:#0d1726;--ink:#e8eef8;--muted:#93a1b8;--line:#1f2f46;
+  --accent:#4aa3ff;--accent-ink:#04101f;--accent-soft:#12304f;
+  --nav:#060d17;--nav-ink:#a9b7cf;--nav-hover:#112038;
+  --ok:#3ccf7a;--ok-soft:#10301f;--warn:#f0a23a;--warn-soft:#3a280c;--bad:#ff6b5e;--bad-soft:#3d1512;--idle:#93a1b8;--idle-soft:#1a283d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body)}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:-.01em;text-wrap:balance;margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;max-width:1440px;margin:0 auto;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* navigation */
+.side{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);overflow:auto;background:var(--nav);color:var(--nav-ink);border-radius:22px;padding:18px 14px;display:flex;flex-direction:column;gap:16px}
+.flag{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--flag-g) 33.3%,var(--flag-w) 33.3% 66.6%,var(--flag-b) 66.6%)}
+.brand{display:flex;gap:11px;align-items:center;padding:2px 6px}
+.brand .mk{width:40px;height:40px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 16px var(--font-display);flex:none}
+.brand b{display:block;color:#fff;font:700 15px/1.15 var(--font-display)}
+.brand small{font-size:12px;color:var(--nav-ink)}
+nav{display:flex;flex-direction:column;gap:3px}
+nav a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;text-decoration:none;color:var(--nav-ink);font-weight:500}
+nav a svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+nav a:hover{background:var(--nav-hover);color:#fff}
+nav a.on{background:var(--accent);color:var(--accent-ink)}
+.side-foot{margin-top:auto;font-size:12px;line-height:1.5;padding:12px 8px 2px;border-top:1px solid var(--nav-hover);display:flex;flex-direction:column;gap:8px}
+.side-foot button{background:var(--nav-hover);color:#fff;border:0;border-radius:9px;padding:8px 10px;font:600 12.5px var(--font-body);cursor:pointer;text-align:left}
+.side-foot .lnk{background:none;padding:0;color:var(--nav-ink);text-decoration:underline;font-weight:500}
+/* workspace */
+main{min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.top h1{font-size:30px;line-height:1.1}
+.top p{margin:4px 0 0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow);min-width:0}
+.card h3{font-size:17px;margin-bottom:14px}
+.grid{display:grid;gap:16px;margin-bottom:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr))}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:center;gap:10px;background:linear-gradient(120deg,var(--accent-soft),var(--surface) 72%);border:1px solid var(--line);border-radius:22px;padding:26px 28px;margin-bottom:16px;box-shadow:var(--shadow);overflow:hidden}
+.hero h2{font-size:28px;line-height:1.12;margin-bottom:10px}
+.hero p{margin:0 0 18px;color:var(--muted);max-width:44ch}
+.hero .net{width:100%;height:auto;max-height:220px}
+.net .wire{stroke:var(--accent);stroke-width:1.6;stroke-dasharray:4 6;opacity:.55;animation:flow 1.6s linear infinite}
+.net .node{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+@keyframes flow{to{stroke-dashoffset:-20}}
+/* tiles */
+.tile{display:flex;flex-direction:column;gap:4px;padding:16px 18px}
+.tile .l{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px}
+.tile .l i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.tile .v{font:700 34px/1.1 var(--font-display);font-variant-numeric:tabular-nums}
+.tile .h{font-size:12.5px;color:var(--muted)}
+/* charts */
+.donut-row{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.donut{width:160px;height:160px;border-radius:50%;position:relative;flex:none}
+.donut::after{content:attr(data-total);position:absolute;inset:26px;background:var(--surface);border-radius:50%;display:grid;place-items:center;font:700 30px var(--font-display)}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.legend div{display:flex;align-items:center;gap:9px}
+.legend i{width:11px;height:11px;border-radius:3px}
+.legend b{margin-left:auto;padding-left:16px;font-variant-numeric:tabular-nums}
+.bars{display:flex;flex-direction:column;gap:10px}
+.brow{display:grid;grid-template-columns:132px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:14px}
+.brow .lb{display:flex;align-items:center;gap:8px;min-width:0}
+.brow .lb svg{width:22px;height:22px;flex:none}
+.track{height:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.brow b{text-align:right;font-variant-numeric:tabular-nums}
+/* pills + buttons */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.info{background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.idle{background:var(--idle-soft);color:var(--idle)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+button{font:inherit}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:11px;padding:10px 16px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.o{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.o:hover{background:var(--surface-2)}
+.btn.danger{background:var(--bad);color:#fff}
+.sm{padding:5px 11px;font-size:13px;border-radius:9px;background:var(--accent-soft);color:var(--accent);border:0;font-weight:600;cursor:pointer}
+.sm.del{background:var(--bad-soft);color:var(--bad)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.tools .grow{flex:1 1 220px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 12px;width:100%}
+.tools input,.tools select{width:auto;min-width:150px}
+.tools .grow{width:auto}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px}
+.seg button{border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:8px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--accent-soft);color:var(--accent)}
+/* tables */
+.tw{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:12px 16px;font-size:12.5px;color:var(--muted);font-weight:600;background:var(--surface-2);white-space:nowrap}
+td{padding:12px 16px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:hover td{background:var(--surface-2)}
+td.act{display:flex;gap:6px;white-space:nowrap}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.tag{font:500 12.5px var(--font-tag);color:var(--muted);letter-spacing:.02em}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.who .ic-s{width:34px;height:34px;flex:none;background:var(--accent-soft);border-radius:10px;padding:3px}
+td a.nm{font-weight:600;text-decoration:none}td a.nm:hover{color:var(--accent)}
+/* asset cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:14px}
+.ac{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;text-decoration:none;box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.ac:hover{transform:translateY(-3px);border-color:var(--accent)}
+.ac .art{height:108px;display:grid;place-items:center;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ac .art svg{width:70px;height:70px}
+.ac .bd{padding:14px 16px 16px;display:flex;flex-direction:column;gap:7px}
+.ac b{font:600 15.5px/1.25 var(--font-display)}
+.ac .ft{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+/* icons */
+.ic .f{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round}
+.ic .s{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}
+.ic .d{fill:var(--accent);stroke:none}
+.ic .w{fill:var(--surface)}
+/* detail */
+.dg{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.big{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px}
+.big .art{width:100%;height:190px;display:grid;place-items:center;background:var(--surface-2);border-radius:14px;border:1px solid var(--line)}
+.big .art svg{width:130px;height:130px}
+.label{border:1px dashed var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink);width:100%}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px 20px}
+.kv dt{font-size:12.5px;color:var(--muted);margin-bottom:2px}
+.kv dd{margin:0;font-weight:600}
+.crumb{display:inline-flex;gap:6px;color:var(--muted);text-decoration:none;font-weight:500;margin-bottom:10px}
+.crumb:hover{color:var(--accent)}
+.life{height:12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);position:relative;overflow:hidden}
+.life i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--ok)}
+.life i.w{background:var(--warn)}.life i.b{background:var(--bad)}
+/* lists */
+.alert{display:flex;gap:12px;padding:11px 13px;border-radius:12px;margin-bottom:8px;font-size:14px;align-items:flex-start}
+.alert.bad{background:var(--bad-soft)}.alert.warn{background:var(--warn-soft)}.alert.ok{background:var(--ok-soft)}
+.alert b{display:block}
+.alert .dot{width:10px;height:10px;border-radius:50%;margin-top:6px;flex:none}
+.alert.bad .dot{background:var(--bad)}.alert.warn .dot{background:var(--warn)}.alert.ok .dot{background:var(--ok)}
+.wrow{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr) 140px;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.wrow:first-child{border-top:0}
+.wrow .r{text-align:right;font-weight:600;font-size:14px}
+.dept{display:flex;flex-direction:column;gap:12px}
+.dept h3{margin:0}
+.dept .nums{display:flex;gap:22px}
+.dept .nums b{display:block;font:700 26px/1.1 var(--font-display)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:2px 10px 2px 4px;font-size:12.5px}
+.chip svg{width:20px;height:20px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.log li{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:14px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.log li:first-child{border-top:0}
+.log .pt{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:6px}
+.empty{padding:34px;text-align:center;color:var(--muted)}
+.lab{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px}
+.prose p{max-width:75ch;margin:0 0 12px}
+.prose ul{margin:0 0 12px;padding-left:20px;max-width:75ch}
+.prose li{margin-bottom:6px}
+.prose h3{margin:20px 0 8px;font-size:18px}
+.prose h3:first-child{margin-top:0}
+.prose .tw{margin:8px 0 16px;box-shadow:none}
+.cover{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.feat{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--line)}
+.feat:first-of-type{border-top:0}
+.feat p{margin:2px 0 0;color:var(--muted);max-width:62ch}
+.mailbox{width:100%;font:13.5px/1.5 var(--font-tag);min-height:300px}
+a.btn{display:inline-block;text-decoration:none}
+@media (max-width:920px){.cover{grid-template-columns:minmax(0,1fr)}}
+/* dialogs */
+dialog{border:0;border-radius:20px;padding:0;width:min(540px,94vw);background:var(--surface);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(6,13,23,.6)}
+.mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mh h3{margin:0;font-size:19px}
+.mb{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;max-height:68vh;overflow:auto}
+.mb .full{grid-column:1/-1}
+.mb label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px}
+.mf{padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.err{color:var(--bad);font-size:13.5px;padding:0 22px 12px;min-height:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;max-width:min(420px,92vw);box-shadow:0 14px 34px rgba(0,0,0,.35);z-index:50;font-size:14px}
+@media (max-width:920px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;max-height:none;padding:12px;gap:10px;border-radius:18px}
+  .side .brand small,.side-foot{display:none}
+  nav{flex-direction:row;overflow-x:auto;padding-bottom:2px}
+  nav a{white-space:nowrap;padding:9px 12px}
+  .hero{grid-template-columns:minmax(0,1fr);padding:20px}
+  .hero .net{max-height:170px}
+  .dg{grid-template-columns:minmax(0,1fr)}
+  .wrow{grid-template-columns:minmax(0,1fr) 110px}
+  .wrow .life{grid-column:1/-1;order:3}
+  .top h1{font-size:26px}
+  .mb{grid-template-columns:minmax(0,1fr)}
+  .brow{grid-template-columns:110px minmax(0,1fr) 26px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="side">
+    <div class="flag" aria-hidden="true"></div>
+    <div class="brand"><div class="mk">ST</div><div><b>Smart Technology Limited</b><small>ICT asset desk</small></div></div>
+    <nav id="nav" aria-label="Main"></nav>
+    <div class="sideoot">
+      <span>DIT2105 Computer Support System<br>GROUP MEMBERS · Abu Bakarr Kamara</span>
+       2 · Unisa kargbo</span>
+       3 · Ibrahim sumaray</span>
+       4 · salieu babah sesay</span>
+       5 · sembu fonah</span>
+       6 · khadija Kamara</span>
+      
+      <button type="button" id="theme">Switch light / dark</button>
+      <button type="button" class="lnk" id="reset">Reset sample data</button>
+    </div>
+  </aside>
+  <main>
+    <div class="top">
+      <div><h1 id="title">Dashboard</h1><p id="subtitle"></p></div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+
+<dialog id="dlg"><form id="frm" novalidate>
+  <div class="mh"><h3 id="dTitle"></h3><button type="button" class="btn o" id="dClose" aria-label="Close">Close</button></div>
+  <div class="mb" id="dBody"></div>
+  <div class="err" id="dErr" role="alert"></div>
+  <div class="mf"><button type="button" class="btn o" id="dCancel">Cancel</button><button type="submit" class="btn" id="dOk">Save</button></div>
+</form></dialog>
+<input type="file" id="impFile" accept="application/json,.json" hidden>
+<dialog id="cdlg">
+  <div class="mh"><h3 id="cTitle">Please confirm</h3></div>
+  <div class="mb"><p class="full" id="cMsg" style="margin:0"></p></div>
+  <div class="mf"><button type="button" class="btn o" id="cNo">Keep it</button><button type="button" class="btn danger" id="cOk">Confirm</button></div>
+</dialog>
+<dialog id="tdlg">
+  <div class="mh"><h3 id="tTitle">Copy this text</h3><button type="button" class="btn o" id="tClose">Close</button></div>
+  <div class="mb"><div class="full"><textarea id="tArea" rows="10" readonly></textarea></div></div>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* =====================================================================
+   EMAILJS SETTINGS - enter your three values here (between the quotes)
+   Service ID  : emailjs.com > Email Services > your service
+   Template ID : emailjs.com > Email Templates > your template
+   Public key  : emailjs.com > Account > General > Public Key
+   ===================================================================== */
+const EJS_SERVICE_ID='service_pjsszrc';
+const EJS_TEMPLATE_ID='template_9e2mz59';
+const EJS_PUBLIC_KEY='dpj0y70ppeVlqkq8J';
+
+const KEY='stl_ams_v2';
+const CATS=['Desktop','Laptop','Printer','Network Device','Server','Monitor','Other'];
+const STATUSES=['Available','Assigned','Under Maintenance','Retired'];
+const SCOL={'Available':'var(--ok)','Assigned':'var(--accent)','Under Maintenance':'var(--warn)','Retired':'var(--idle)'};
+const PK={'Available':'ok','Assigned':'info','Under Maintenance':'warn','Retired':'idle','Scheduled':'info','In Progress':'warn','Completed':'ok'};
+const DEPTS=['IT','Finance','HR','Sales','Operations','Administration'];
+const MTYPES=['Preventive','Repair','Upgrade','Inspection'];
+const MSTAT=['Scheduled','In Progress','Completed'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iso=d=>d.toISOString().slice(0,10);
+const off=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+const todayMs=()=>new Date(iso(new Date())).getTime();
+const daysTo=s=>s?Math.round((new Date(s).getTime()-todayMs())/864e5):null;
+const pad=(n,l=3)=>String(n).padStart(l,'0');
+const money=n=>'$'+Number(n||0).toLocaleString();
+const pill=s=>`<span class="pill ${PK[s]||'idle'}">${esc(s)}</span>`;
+
+/* ---------- illustrations (inline SVG, theme aware) ---------- */
+const ICONS={
+ 'Laptop':'<rect x="11" y="13" width="42" height="28" rx="3" class="f"/><path d="M5 46h54l-4 5H9z" class="f"/><rect x="26" y="46.6" width="12" height="2" rx="1" class="d"/>',
+ 'Desktop':'<rect x="9" y="8" width="46" height="30" rx="3" class="f"/><path d="M27 38h10v8H27z" class="f"/><rect x="19" y="46" width="26" height="5" rx="2.5" class="f"/><circle cx="32" cy="23" r="3" class="d"/>',
+ 'Printer':'<rect x="17" y="9" width="30" height="16" rx="2" class="f"/><rect x="7" y="23" width="50" height="23" rx="5" class="f"/><rect x="17" y="38" width="30" height="16" rx="2" class="f w"/><circle cx="48" cy="31" r="2.2" class="d"/>',
+ 'Network Device':'<path d="M17 36V16M47 36V16" class="s"/><rect x="6" y="34" width="52" height="16" rx="5" class="f"/><circle cx="17" cy="42" r="2.2" class="d"/><circle cx="25" cy="42" r="2.2" class="d"/><circle cx="33" cy="42" r="2.2" class="d"/>',
+ 'Server':'<rect x="10" y="7" width="44" height="14" rx="3" class="f"/><rect x="10" y="25" width="44" height="14" rx="3" class="f"/><rect x="10" y="43" width="44" height="14" rx="3" class="f"/><circle cx="18" cy="14" r="2" class="d"/><circle cx="18" cy="32" r="2" class="d"/><circle cx="18" cy="50" r="2" class="d"/><path d="M30 14h16M30 32h16M30 50h16" class="s"/>',
+ 'Monitor':'<rect x="6" y="10" width="52" height="33" rx="3" class="f"/><path d="M26 43h12v9H26z" class="f"/><path d="M18 54h28" class="s"/>',
+ 'Other':'<rect x="6" y="20" width="52" height="26" rx="6" class="f"/><circle cx="41" cy="33" r="9" class="f w"/><circle cx="41" cy="33" r="3.5" class="d"/><path d="M14 28h10M14 34h6" class="s"/><path d="M14 46v5M50 46v5" class="s"/>'
+};
+function icon(cat,size,x,y){
+  const pos=x!=null?` x="${x}" y="${y}"`:'';
+  return `<svg class="ic" viewBox="0 0 64 64" width="${size||64}" height="${size||64}"${pos} aria-hidden="true">${ICONS[cat]||ICONS.Other}</svg>`;
+}
+function netArt(){
+  const nodes=[['Laptop',70,48],['Printer',70,142],['Network Device',350,48],['Desktop',350,142],['Monitor',210,24]];
+  const c=[210,100];
+  return `<svg class="net" viewBox="0 0 420 190" role="img" aria-label="Devices connected to the office server">
+   ${nodes.map(n=>`<line class="wire" x1="${c[0]}" y1="${c[1]}" x2="${n[1]}" y2="${n[2]}"/>`).join('')}
+   ${nodes.map(n=>`<circle class="node" cx="${n[1]}" cy="${n[2]}" r="26"/>${icon(n[0],34,n[1]-17,n[2]-17)}`).join('')}
+   <circle class="node" cx="${c[0]}" cy="${c[1]}" r="36" style="stroke:var(--accent)"/>${icon('Server',50,c[0]-25,c[1]-25)}</svg>`;
+}
+function barcode(id){
+  let x=2,out='';
+  for(const ch of id){const c=ch.charCodeAt(0);for(let i=0;i<6;i++){const w=((c>>i)&1)?3:1.4;if(i%2===0)out+=`<rect x="${x}" y="0" width="${w}" height="26"/>`;x+=w+1.2}}
+  return `<svg viewBox="0 0 ${x+2} 26" width="${Math.round((x+2)*1.25)}" height="32" fill="currentColor" aria-hidden="true">${out}</svg>`;
+}
+const NAV=[
+ ['dashboard','Dashboard','<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>'],
+ ['assets','Assets','<rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 19.5h20"/>'],
+ ['users','Users &amp; assignment','<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5c2.5.1 4.2 1.7 4.7 4.5"/>'],
+ ['departments','Departments','<rect x="3" y="10" width="8" height="11" rx="1.5"/><rect x="13" y="3" width="8" height="18" rx="1.5"/><path d="M6 14h2M6 17h2M16 7h2M16 11h2M16 15h2"/>'],
+ ['maintenance','Maintenance','<path d="M14.5 6.2a4 4 0 0 0 4.8 4.9l.9.9-8.4 8.4a2.2 2.2 0 0 1-3.1-3.1l8.4-8.4z"/><path d="M14 6l-1-3 3 1z"/>'],
+ ['warranty','Warranty tracker','<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>'],
+ ['activity','Activity log','<path d="M3 12h4l3-8 4 16 3-8h4"/>'],
+ ['reports','Reports','<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h3"/>'],
+ ['email','Email reminders','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>']
+];
+
+/* ---------- data ---------- */
+function seed(){
+  const users=[['Mariama Sesay','IT'],['Ibrahim Conteh','Finance'],['Fatmata Bangura','HR'],['Mohamed Kamara','Sales'],
+    ['Aminata Koroma','Operations'],['Alhaji Turay','Administration'],['Isatu Jalloh','Finance'],['Sorie Mansaray','IT']]
+    .map((u,i)=>({id:'USR-'+pad(i+1),name:u[0],dept:u[1],email:u[0].toLowerCase().replace(/ /g,'.')+'@smarttech.sl'}));
+  const rows=[
+    ['Dell Latitude 5420','Laptop','Assigned',0,400,330,20,950],['HP ProBook 450 G8','Laptop','Assigned',1,380,350,-5,820],
+    ['Lenovo ThinkPad T14','Laptop','Assigned',2,300,430,60,1050],['MacBook Air M1','Laptop','Assigned',3,500,230,90,1100],
+    ['Dell Inspiron 15','Laptop','Available',-1,200,530,120,640],['HP EliteDesk 800','Desktop','Assigned',4,700,30,10,780],
+    ['Dell OptiPlex 3080','Desktop','Assigned',5,650,80,45,720],['Lenovo ThinkCentre M70','Desktop','Assigned',6,600,130,70,690],
+    ['HP ProDesk 400','Desktop','Under Maintenance',3,900,-20,15,610],['HP LaserJet Pro M404','Printer','Assigned',1,450,280,25,330],
+    ['Canon imageRUNNER 2625','Printer','Assigned',2,500,230,35,1500],['Epson EcoTank L3250','Printer','Available',-1,150,580,150,260],
+    ['Cisco Catalyst 2960','Network Device','Assigned',0,1000,-100,5,900],['TP-Link TL-SG1024','Network Device','Assigned',7,800,10,40,120],
+    ['Ubiquiti UniFi AP','Network Device','Available',-1,300,430,100,180],['MikroTik RB4011','Network Device','Under Maintenance',7,350,380,12,230],
+    ['Fortinet FortiGate 60F','Network Device','Assigned',0,250,480,55,780],['Dell PowerEdge R440','Server','Assigned',0,550,180,18,2800],
+    ['HP ProLiant DL360','Server','Retired',-1,1800,-700,null,2400],['Dell P2422H Monitor','Monitor','Assigned',4,400,330,200,190],
+    ['Epson EB-X06 Projector','Other','Available',-1,600,130,80,450],['APC Back-UPS 1500VA','Other','Under Maintenance',5,720,-5,8,210],
+    ['Dell OptiPlex 380 (old)','Desktop','Retired',-1,2000,-1200,null,400]];
+  const assets=rows.map((r,i)=>({id:'AST-'+pad(i+1),name:r[0],category:r[1],serial:'SN-'+(48210+i*137),purchaseDate:off(-r[4]),
+    warrantyEnd:off(r[5]),nextMaint:r[6]==null?'':off(r[6]),cost:r[7],status:r[2],assignedTo:r[3]>=0?users[r[3]].id:'',notes:''}));
+  const M=(a,type,desc,d,tech,cost,st,i)=>({id:'MNT-'+pad(i),assetId:'AST-'+pad(a),type,description:desc,date:off(d),technician:tech,cost,status:st});
+  const maint=[
+    M(2,'Preventive','Cleaning, OS updates and disk check',-60,'Sorie Mansaray',25,'Completed',1),
+    M(9,'Repair','Power supply replacement',-3,'Sorie Mansaray',45,'In Progress',2),
+    M(16,'Repair','Firmware corrupted: reflash and reconfigure',-2,'Mariama Sesay',30,'In Progress',3),
+    M(22,'Repair','Battery replacement',-1,'Sorie Mansaray',60,'In Progress',4),
+    M(10,'Preventive','Roller and toner service',-30,'External vendor',40,'Completed',5),
+    M(18,'Inspection','Fan and RAID health check',-45,'Mariama Sesay',0,'Completed',6),
+    M(6,'Upgrade','RAM upgrade from 8GB to 16GB',-20,'Sorie Mansaray',55,'Completed',7),
+    M(13,'Preventive','Firmware update and config backup',5,'Mariama Sesay',0,'Scheduled',8),
+    M(19,'Inspection','Decommission assessment',-90,'Mariama Sesay',0,'Completed',9),
+    M(3,'Preventive','Dust cleaning and battery calibration',-10,'Sorie Mansaray',20,'Completed',10)];
+  const L=(d,m)=>({t:off(d)+'T09:30:00',msg:m});
+  const log=[L(-1,'Maintenance logged for APC Back-UPS 1500VA: battery replacement'),L(-2,'MikroTik RB4011 sent for repair'),
+    L(-3,'HP ProDesk 400 moved to Under Maintenance'),L(-5,'Dell Inspiron 15 returned and set to Available'),
+    L(-9,'Dell Latitude 5420 assigned to Mariama Sesay'),L(-14,'Epson EcoTank L3250 registered'),L(-20,'RAM upgrade completed on HP EliteDesk 800')];
+  return {assets,users,maint,log};
+}
+let DB;
+function load(){try{DB=JSON.parse(localStorage.getItem(KEY))}catch(e){DB=null}if(!DB||!DB.assets||!DB.log)DB=seed();if(!DB.settings)DB.settings={name:'',email:'',student:'',studentId:'',tests:{}};if(!DB.settings.tests)DB.settings.tests={};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+function logIt(msg){DB.log.unshift({t:new Date().toISOString(),msg});DB.log=DB.log.slice(0,60)}
+const user=id=>DB.users.find(u=>u.id===id);
+const asset=id=>DB.assets.find(a=>a.id===id);
+const nextId=(list,p)=>p+'-'+pad(list.reduce((m,x)=>Math.max(m,parseInt(x.id.split('-')[1])||0),0)+1);
+const val=l=>l.reduce((s,a)=>s+Number(a.cost||0),0);
+
+function alerts(){
+  const out=[];
+  DB.assets.filter(a=>a.status!=='Retired').forEach(a=>{
+    const m=daysTo(a.nextMaint),w=daysTo(a.warrantyEnd),t=`${a.name} (${a.id})`;
+    if(a.nextMaint&&m<0)out.push({lvl:'bad',t,d:`Maintenance overdue by ${-m} day${-m===1?'':'s'}`,id:a.id});
+    else if(a.nextMaint&&m<=30)out.push({lvl:'warn',t,d:`Maintenance due in ${m} day${m===1?'':'s'}`,id:a.id});
+    if(a.warrantyEnd&&w<0)out.push({lvl:'bad',t,d:`Warranty expired ${-w} day${-w===1?'':'s'} ago. Renew it.`,id:a.id});
+    else if(a.warrantyEnd&&w<=60)out.push({lvl:'warn',t,d:`Warranty ends in ${w} day${w===1?'':'s'}`,id:a.id});
+  });
+  return out.sort((a,b)=>(a.lvl==='bad'?0:1)-(b.lvl==='bad'?0:1));
+}
+function alertsHtml(list,limit){
+  if(!list.length)return '<div class="alert ok"><span class="dot"></span><div><b>All clear</b>No maintenance or warranty actions are due.</div></div>';
+  return list.slice(0,limit||99).map(x=>`<a class="alert ${x.lvl}" style="text-decoration:none" href="#asset-${x.id}"><span class="dot"></span><div><b>${esc(x.t)}</b>${esc(x.d)}</div></a>`).join('');
+}
+function toast(msg){const t=$('#toast');t.innerHTML=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,4500)}
+function when(t){const d=new Date(t);const n=Math.round((todayMs()-new Date(iso(d)).getTime())/864e5);
+  const day=n<=0?'Today':n===1?'Yesterday':n+' days ago';return `${day} · ${iso(d)}`}
+
+/* ---------- views ---------- */
+const V={};
+const barsHtml=(items,max,withIcon)=>`<div class="bars">${items.map(([l,v])=>`<div class="brow"><span class="lb">${withIcon?icon(l,22):''}<span>${esc(l)}</span></span><div class="track"><i style="width:${max?v/max*100:0}%"></i></div><b>${v}</b></div>`).join('')}</div>`;
+
+V.dashboard=()=>{
+  const A=DB.assets,total=A.length,cnt=s=>A.filter(a=>a.status===s).length;
+  const al=alerts(),done=DB.maint.filter(m=>m.status==='Completed').length;
+  const tiles=[['Total ICT assets',total,'var(--accent)',money(val(A))+' total value'],['Assigned',cnt('Assigned'),SCOL.Assigned,'in use by staff'],
+    ['Available',cnt('Available'),SCOL.Available,'ready to assign'],['Under maintenance',cnt('Under Maintenance'),SCOL['Under Maintenance'],'at the workshop'],
+    ['Retired',cnt('Retired'),SCOL.Retired,'out of service'],['Maintenance completed',done,'var(--ok)','jobs closed']];
+  let acc=0;
+  const stops=STATUSES.map(s=>{const p=cnt(s)/total*100;const r=`${SCOL[s]} ${acc}% ${acc+p}%`;acc+=p;return r}).join(',');
+  const byCat=CATS.map(c=>[c,A.filter(a=>a.category===c).length]).filter(x=>x[1]);
+  const byDept=DEPTS.map(d=>[d,A.filter(a=>a.assignedTo&&user(a.assignedTo)?.dept===d).length]);
+  const recent=[...DB.maint].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  return `
+  <section class="hero"><div><h2>Every computer, printer and router at Smart Technology Limited, in one place.</h2>
+    <p>${total} assets are registered. Maintenance and warranty reminders are sent by email.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" data-act="addAsset">Register asset</button><a class="btn o" style="text-decoration:none" href="#warranty">Open warranty tracker</a></div></div>
+    ${netArt()}</section>
+  <div class="grid tiles">${tiles.map(t=>`<div class="card tile"><span class="l"><i style="background:${t[2]}"></i>${t[0]}</span><span class="v">${t[1]}</span><span class="h">${t[3]}</span></div>`).join('')}</div>
+  <div class="grid g2">
+    <div class="card"><h3>Asset status</h3><div class="donut-row"><div class="donut" data-total="${total}" style="background:conic-gradient(${stops})" role="img" aria-label="Asset status chart"></div>
+      <div class="legend">${STATUSES.map(s=>`<div><i style="background:${SCOL[s]}"></i>${s}<b>${cnt(s)}</b></div>`).join('')}</div></div></div>
+    <div class="card"><h3>Assets by category</h3>${barsHtml(byCat,Math.max(...byCat.map(x=>x[1])),true)}</div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Assets assigned by department</h3>${barsHtml(byDept,Math.max(1,...byDept.map(x=>x[1])))}
+      <p class="muted small" style="margin:12px 0 0">${A.filter(a=>a.assignedTo).length} assigned · ${A.filter(a=>!a.assignedTo).length} not assigned</p></div>
+    <div class="card"><h3>Email reminders</h3><p style="margin:0 0 14px">${al.length?`${al.length} reminder${al.length===1?'':'s'} ready to send to the administrator.`:'No reminders are due.'}</p><a class="btn" href="#email">Prepare reminder email</a></div>
+  </div>
+  <div class="card"><h3>Recent maintenance</h3><div class="tw" style="border:0;box-shadow:none"><table><thead><tr><th>Date</th><th>Asset</th><th>Type</th><th>Work</th><th>Status</th></tr></thead><tbody>
+  ${recent.map(m=>{const a=asset(m.assetId);return `<tr><td>${m.date}</td><td>${a?`<a class="nm" href="#asset-${a.id}">${esc(a.name)}</a>`:esc(m.assetId)}</td><td>${m.type}</td><td>${esc(m.description)}</td><td>${pill(m.status)}</td></tr>`}).join('')}
+  </tbody></table></div></div>`;
+};
+
+let assetMode='grid';
+V.assets=()=>`
+  <div class="tools">
+    <input class="grow" id="q" type="search" placeholder="Search name, tag, serial or user" aria-label="Search assets">
+    <select id="fc" aria-label="Category"><option value="">All categories</option>${CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+    <select id="fs" aria-label="Status"><option value="">All statuses</option>${STATUSES.map(c=>`<option>${c}</option>`).join('')}</select>
+    <div class="seg" role="group" aria-label="Layout"><button type="button" data-act="mode" data-id="grid" class="${assetMode==='grid'?'on':''}">Cards</button><button type="button" data-act="mode" data-id="table" class="${assetMode==='table'?'on':''}">Table</button></div>
+    <button class="btn" data-act="addAsset">Register asset</button>
+  </div><div id="assetOut"></div>`;
+function assetOut(){
+  const q=($('#q')?.value||'').toLowerCase(),fc=$('#fc')?.value,fs=$('#fs')?.value;
+  const rows=DB.assets.filter(a=>(!fc||a.category===fc)&&(!fs||a.status===fs)&&(!q||[a.id,a.name,a.serial,user(a.assignedTo)?.name].join(' ').toLowerCase().includes(q)));
+  const out=$('#assetOut');if(!out)return;
+  if(!rows.length){out.innerHTML='<div class="card empty">No assets match. Clear the search or register a new asset.</div>';return}
+  if(assetMode==='grid'){
+    out.innerHTML=`<div class="cards">${rows.map(a=>{const u=user(a.assignedTo);return `<a class="ac" href="#asset-${a.id}"><div class="art">${icon(a.category,70)}</div>
+      <div class="bd"><span class="tag">${a.id}</span><b>${esc(a.name)}</b><div class="ft">${pill(a.status)}<span>${a.category}</span></div>
+      <div class="ft"><span>${u?esc(u.name):'Not assigned'}</span></div></div></a>`}).join('')}</div>`;
+  }else{
+    out.innerHTML=`<div class="tw"><table><thead><tr><th>Asset</th><th>Category</th><th>Status</th><th>Assigned to</th><th>Warranty</th><th>Next service</th><th></th></tr></thead><tbody>${rows.map(a=>{
+      const u=user(a.assignedTo),w=daysTo(a.warrantyEnd);
+      return `<tr><td><div class="who"><span class="ic-s">${icon(a.category,28)}</span><div><a class="nm" href="#asset-${a.id}">${esc(a.name)}</a><div class="tag">${a.id} · ${esc(a.serial)}</div></div></div></td>
+      <td>${a.category}</td><td>${pill(a.status)}</td><td>${u?esc(u.name)+`<div class="muted small">${u.dept}</div>`:'<span class="muted">Not assigned</span>'}</td>
+      <td style="color:${w<0?'var(--bad)':w<=60?'var(--warn)':'inherit'}">${a.warrantyEnd||'-'}</td><td>${a.nextMaint||'-'}</td>
+      <td class="act">${a.status==='Available'?`<button class="sm" data-act="assign" data-id="${a.id}">Assign</button>`:''}${a.status==='Assigned'?`<button class="sm" data-act="return" data-id="${a.id}">Return</button>`:''}<button class="sm" data-act="editAsset" data-id="${a.id}">Edit</button></td></tr>`}).join('')}</tbody></table></div>`;
+  }
+}
+
+V.asset=id=>{
+  const a=asset(id);
+  if(!a)return '<div class="card empty">That asset no longer exists. <a href="#assets">Back to assets</a></div>';
+  const u=user(a.assignedTo),w=daysTo(a.warrantyEnd),m=daysTo(a.nextMaint);
+  const p0=new Date(a.purchaseDate).getTime(),p1=new Date(a.warrantyEnd).getTime();
+  const pct=Math.max(0,Math.min(100,(todayMs()-p0)/Math.max(1,p1-p0)*100));
+  const hist=DB.maint.filter(x=>x.assetId===a.id).sort((x,y)=>y.date.localeCompare(x.date));
+  return `<a class="crumb" href="#assets">← All assets</a>
+  <div class="dg">
+    <div class="card big"><div class="art">${icon(a.category,130)}</div>
+      <div class="label"><span style="color:var(--ink)">${barcode(a.id)}</span><span class="tag">STL-${a.id}</span></div>${pill(a.status)}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      ${a.status==='Available'?`<button class="btn" data-act="assign" data-id="${a.id}">Assign</button>`:''}${a.status==='Assigned'?`<button class="btn" data-act="return" data-id="${a.id}">Return</button>`:''}
+      <button class="btn o" data-act="editAsset" data-id="${a.id}">Edit</button><button class="btn o" data-act="addMaint" data-id="${a.id}">Log maintenance</button></div></div>
+    <div class="card"><h3>${esc(a.name)}</h3>
+      <dl class="kv" style="margin:0 0 20px">
+        <div><dt>Category</dt><dd>${a.category}</dd></div><div><dt>Serial number</dt><dd class="tag" style="color:var(--ink);font-size:14px">${esc(a.serial)}</dd></div>
+        <div><dt>Purchased</dt><dd>${a.purchaseDate||'-'}</dd></div><div><dt>Purchase cost</dt><dd>${money(a.cost)}</dd></div>
+        <div><dt>Assigned to</dt><dd>${u?esc(u.name):'Not assigned'}</dd></div><div><dt>Department</dt><dd>${u?u.dept:'-'}</dd></div>
+        <div><dt>Next maintenance</dt><dd style="color:${a.nextMaint&&m<0?'var(--bad)':'inherit'}">${a.nextMaint||'-'}${a.nextMaint&&a.status!=='Retired'?` <span class="muted small">(${m<0?-m+' days overdue':m+' days'})</span>`:''}</dd></div>
+        <div class="full"><dt>Notes</dt><dd style="font-weight:500">${esc(a.notes)||'<span class="muted">None</span>'}</dd></div></dl>
+      <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;font-size:14px"><b>Warranty</b><span class="muted">${a.warrantyEnd?(w<0?'Expired '+-w+' days ago':w+' days left (ends '+a.warrantyEnd+')'):'Not set'}</span></div>
+      <div class="life" role="img" aria-label="Warranty used"><i class="${w<0?'b':w<=60?'w':''}" style="width:${pct}%"></i></div></div>
+  </div>
+  <div class="card"><h3>Maintenance history</h3>${hist.length?`<div class="tw" style="border:0;box-shadow:none"><table><thead><tr><th>Date</th><th>Type</th><th>Work</th><th>Technician</th><th>Cost</th><th>Status</th></tr></thead><tbody>
+  ${hist.map(x=>`<tr><td>${x.date}</td><td>${x.type}</td><td>${esc(x.description)}</td><td>${esc(x.technician)}</td><td>${money(x.cost)}</td><td>${pill(x.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">No maintenance has been logged for this asset yet.</p>'}
+  <div style="margin-top:16px"><button class="sm del" data-act="delAsset" data-id="${a.id}">Delete asset</button></div></div>`;
+};
+
+V.users=()=>`
+  <div class="tools"><button class="btn" data-act="addUser">Add user</button></div>
+  <div class="tw"><table><thead><tr><th>User</th><th>Department</th><th>Email</th><th>Assigned equipment</th><th></th></tr></thead><tbody>
+  ${DB.users.map(u=>{const as=DB.assets.filter(a=>a.assignedTo===u.id);
+   return `<tr><td><b>${esc(u.name)}</b><div class="tag">${u.id}</div></td><td>${u.dept}</td><td class="muted">${esc(u.email)}</td>
+   <td>${as.length?`<div class="chips">${as.map(a=>`<a class="chip" style="text-decoration:none" href="#asset-${a.id}">${icon(a.category,20)}${esc(a.name)}</a>`).join('')}</div>`:'<span class="muted">Nothing assigned</span>'}</td>
+   <td class="act"><button class="sm" data-act="editUser" data-id="${u.id}">Edit</button><button class="sm del" data-act="delUser" data-id="${u.id}">Delete</button></td></tr>`}).join('')}
+  </tbody></table></div>`;
+
+V.departments=()=>`<div class="grid g2">${DEPTS.map(d=>{
+  const us=DB.users.filter(u=>u.dept===d),as=DB.assets.filter(a=>a.assignedTo&&user(a.assignedTo)?.dept===d);
+  const cats=CATS.map(c=>[c,as.filter(a=>a.category===c).length]).filter(x=>x[1]);
+  return `<div class="card dept"><h3>${d}</h3><div class="nums"><span><b>${us.length}</b><span class="muted small">users</span></span><span><b>${as.length}</b><span class="muted small">assets</span></span><span><b>${money(val(as))}</b><span class="muted small">value</span></span></div>
+  ${cats.length?`<div class="chips">${cats.map(c=>`<span class="chip">${icon(c[0],20)}${c[1]} ${c[0]}${c[1]>1&&c[0]!=='Other'?'s':''}</span>`).join('')}</div>`:'<p class="muted small" style="margin:0">No assets assigned yet.</p>'}
+  <div class="muted small">${us.length?us.map(u=>esc(u.name)).join(', '):'No users in this department.'}</div></div>`}).join('')}</div>`;
+
+V.maintenance=()=>{
+  const c=s=>DB.maint.filter(m=>m.status===s).length;
+  return `<div class="grid tiles"><div class="card tile"><span class="l"><i style="background:var(--accent)"></i>Scheduled</span><span class="v">${c('Scheduled')}</span></div>
+  <div class="card tile"><span class="l"><i style="background:var(--warn)"></i>In progress</span><span class="v">${c('In Progress')}</span></div>
+  <div class="card tile"><span class="l"><i style="background:var(--ok)"></i>Completed</span><span class="v">${c('Completed')}</span></div>
+  <div class="card tile"><span class="l"><i style="background:var(--idle)"></i>Total spend</span><span class="v">${money(DB.maint.reduce((s,m)=>s+Number(m.cost||0),0))}</span></div></div>
+  <div class="tools"><select id="fm" aria-label="Filter by status"><option value="">All records</option>${MSTAT.map(s=>`<option>${s}</option>`).join('')}</select><button class="btn" data-act="addMaint">Log maintenance</button></div>
+  <div class="tw"><table><thead><tr><th>Date</th><th>Asset</th><th>Type</th><th>Work</th><th>Technician</th><th>Cost</th><th>Status</th><th></th></tr></thead><tbody id="mBody"></tbody></table></div>`;
+};
+function maintRows(){
+  const f=$('#fm')?.value,b=$('#mBody');if(!b)return;
+  const rows=[...DB.maint].filter(m=>!f||m.status===f).sort((a,c)=>c.date.localeCompare(a.date));
+  b.innerHTML=rows.length?rows.map(m=>{const a=asset(m.assetId);return `<tr><td>${m.date}<div class="tag">${m.id}</div></td>
+  <td>${a?`<div class="who"><span class="ic-s">${icon(a.category,28)}</span><a class="nm" href="#asset-${a.id}">${esc(a.name)}</a></div>`:esc(m.assetId)}</td><td>${m.type}</td><td>${esc(m.description)}</td><td>${esc(m.technician)}</td><td>${money(m.cost)}</td><td>${pill(m.status)}</td>
+  <td class="act"><button class="sm" data-act="editMaint" data-id="${m.id}">Edit</button><button class="sm del" data-act="delMaint" data-id="${m.id}">Delete</button></td></tr>`}).join(''):'<tr><td colspan="8" class="empty">No maintenance records.</td></tr>';
+}
+
+V.warranty=()=>{
+  const rows=DB.assets.filter(a=>a.status!=='Retired'&&a.warrantyEnd).map(a=>({a,w:daysTo(a.warrantyEnd)})).sort((x,y)=>x.w-y.w);
+  const exp=rows.filter(r=>r.w<0).length,soon=rows.filter(r=>r.w>=0&&r.w<=60).length;
+  return `<div class="grid tiles"><div class="card tile"><span class="l"><i style="background:var(--bad)"></i>Expired</span><span class="v">${exp}</span></div>
+  <div class="card tile"><span class="l"><i style="background:var(--warn)"></i>Ending within 60 days</span><span class="v">${soon}</span></div>
+  <div class="card tile"><span class="l"><i style="background:var(--ok)"></i>Covered</span><span class="v">${rows.length-exp-soon}</span></div></div>
+  <div class="card"><h3>Warranty coverage, soonest first</h3>${rows.map(({a,w})=>{
+    const p0=new Date(a.purchaseDate).getTime(),p1=new Date(a.warrantyEnd).getTime(),pct=Math.max(0,Math.min(100,(todayMs()-p0)/Math.max(1,p1-p0)*100));
+    return `<div class="wrow"><div class="who"><span class="ic-s">${icon(a.category,28)}</span><div style="min-width:0"><a class="nm" href="#asset-${a.id}">${esc(a.name)}</a><div class="tag">${a.id}</div></div></div>
+    <div class="life"><i class="${w<0?'b':w<=60?'w':''}" style="width:${pct}%"></i></div>
+    <div class="r" style="color:${w<0?'var(--bad)':w<=60?'var(--warn)':'var(--ink)'}">${w<0?'Expired '+-w+'d ago':w+' days left'}</div></div>`}).join('')}</div>`;
+};
+
+V.activity=()=>`<div class="card"><h3>Recent activity</h3><ul class="log">${DB.log.map(l=>`<li><span class="pt"></span><span>${esc(l.msg)}</span><span class="muted small">${when(l.t)}</span></li>`).join('')}</ul></div>`;
+
+const csvOf=(head,rows)=>[head,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');
+V.reports=()=>{
+  const A=DB.assets;
+  const tbl=(head,rows)=>`<div class="tw"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return `<div class="tools"><button class="btn" data-act="csvAssets">Copy assets as CSV</button><button class="btn o" data-act="csvMaint">Copy maintenance as CSV</button><button class="btn o" data-act="exportData">Export data file</button><button class="btn o" data-act="importData">Load data file</button></div>
+  <div class="grid tiles"><div class="card tile"><span class="l">Total asset value</span><span class="v">${money(val(A))}</span></div>
+  <div class="card tile"><span class="l">Maintenance spend</span><span class="v">${money(DB.maint.reduce((s,m)=>s+Number(m.cost||0),0))}</span></div>
+  <div class="card tile"><span class="l">Open reminders</span><span class="v">${alerts().length}</span></div></div>
+  <h3 style="margin:8px 0 10px">Assets by category</h3>${tbl(['Category','Total','Available','Assigned','Under maintenance','Retired','Value'],CATS.map(c=>{const l=A.filter(a=>a.category===c);return [c,l.length,...STATUSES.map(s=>l.filter(a=>a.status===s).length),money(val(l))]}))}
+  <h3 style="margin:22px 0 10px">Assets by department</h3>${tbl(['Department','Users','Assets assigned','Value'],DEPTS.map(d=>{const l=A.filter(a=>a.assignedTo&&user(a.assignedTo)?.dept===d);return [d,DB.users.filter(u=>u.dept===d).length,l.length,money(val(l))]}))}
+  <h3 style="margin:22px 0 10px">Maintenance summary</h3>${tbl(['Status','Records','Cost'],MSTAT.map(s=>{const l=DB.maint.filter(m=>m.status===s);return [s,l.length,money(l.reduce((t,m)=>t+Number(m.cost||0),0))]}))}`;
+};
+
+/* ---------- email reminders ---------- */
+function mailText(){
+  const al=alerts(),s=DB.settings,n=al.length;
+  const body=`Hello ${s.name||'Administrator'},\n\nThe asset desk has ${n} reminder${n===1?'':'s'} for ${iso(new Date())}:\n\n${al.map(x=>`- ${x.t}: ${x.d}`).join('\n')||'Nothing is due.'}\n\nPlease schedule the maintenance or renew the warranties listed above.\n\nSmart Technology Limited ICT asset desk`;
+  const subject=`Smart Technology Limited: ${n} asset reminder${n===1?'':'s'}`;
+  return {subject,body,href:`mailto:${(s.email||'').trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`};
+}
+function refreshMail(){const m=mailText(),a=$('#mailGo'),t=$('#mailBody'),p=$('#ejsPill');if(a)a.href=m.href;if(t)t.value='Subject: '+m.subject+'\n\n'+m.body;if(p)p.outerHTML=ejsPill()}
+
+/* ---------- EmailJS ---------- */
+const COMPANY='Smart Technology Limited';
+const EJS_SUBJECT='{{subject}}';
+const EJS_BODY=`<p>Hello {{to_name}},</p>
+<p>The ICT asset desk at {{company}} has <b>{{count}}</b> reminder(s) for {{date}}:</p>
+{{{reminders_html}}}
+<p>Please schedule the maintenance or renew the warranties listed above.</p>
+<p>{{company}} ICT asset desk</p>`;
+function mailParams(test){
+  const al=alerts(),s=DB.settings,n=al.length;
+  return {
+    to_email:(s.email||'').trim(),to_name:s.name||'Administrator',company:COMPANY,date:iso(new Date()),count:n,
+    subject:(test?'Test: ':'')+`${COMPANY}: ${n} asset reminder${n===1?'':'s'}`,
+    reminders_html:n?al.map(x=>`<p style="margin:0 0 10px"><b>${esc(x.t)}</b><br>${esc(x.d)}</p>`).join(''):'<p>Nothing is due.</p>',
+    reminders_text:al.map(x=>`- ${x.t}: ${x.d}`).join('\n')||'Nothing is due.'
+  };
+}
+const ejsReady=()=>{const s=DB.settings;return !!(s.email&&s.email.trim()&&EJS_SERVICE_ID&&EJS_TEMPLATE_ID&&EJS_PUBLIC_KEY&&!/xxxxxxx|your_public_key/.test(EJS_SERVICE_ID+EJS_TEMPLATE_ID+EJS_PUBLIC_KEY))};
+const ejsPill=()=>`<span id="ejsPill" class="pill ${ejsReady()?'ok':'warn'}" style="margin-left:8px;vertical-align:middle">${ejsReady()?'Ready to send':'Keys missing'}</span>`;
+async function sendReminder(o){
+  o=o||{};const s=DB.settings,say=m=>{if(!o.auto)toast(m)};
+  if(!window.emailjs){say('The EmailJS library did not load. Check your internet connection and refresh.');return false}
+  if(!ejsReady()){say('Enter the administrator email, and set the EmailJS IDs at the top of the code.');return false}
+  if(!o.test&&!alerts().length){say('No reminders are due, so no email was sent.');return false}
+  try{
+    await emailjs.send(EJS_SERVICE_ID,EJS_TEMPLATE_ID,mailParams(o.test),{publicKey:EJS_PUBLIC_KEY});
+    s.ejsLast=iso(new Date());logIt(`${o.test?'Test email':'Reminder email'} sent to ${s.email.trim()}`);save();
+    toast(`${o.test?'Test email':'Reminder email'} sent to ${esc(s.email.trim())}.`);
+    if(location.hash==='#email')render();
+    return true;
+  }catch(e){
+    toast('EmailJS could not send the email: '+esc((e&&(e.text||e.message))||'unknown error'));
+    return false;
+  }
+}
+V.email=()=>{
+  const s=DB.settings,m=mailText(),al=alerts();
+  return `<div class="grid g2">
+   <div class="card"><h3>Who receives the reminders</h3><div style="display:grid;gap:12px">
+     <div><label class="lab" for="s_name">Administrator name</label><input id="s_name" data-set="name" value="${esc(s.name)}" placeholder="For example, Mariama Sesay"></div>
+     <div><label class="lab" for="s_email">Administrator email</label><input id="s_email" type="email" data-set="email" value="${esc(s.email)}" placeholder="admin@smarttech.sl"></div></div>
+     <p class="muted small" style="margin:12px 0 0">Reminders appear when maintenance is due within 30 days or overdue, and when a warranty ends within 60 days or has expired. Saved in this browser as you type.</p></div>
+   <div class="card"><h3>EmailJS connection${ejsPill()}</h3><div style="display:grid;gap:12px"><p class="muted small" style="margin:0">The Service ID, Template ID and Public key are set in the code, in the EMAILJS SETTINGS block at the top of the script.</p>
+     <label style="display:flex;gap:10px;align-items:flex-start;font-weight:500"><input type="checkbox" data-cb="ejsAuto" style="width:auto;margin-top:4px"${s.ejsAuto?' checked':''}><span>Send the reminder email automatically, once a day, when this system is opened</span></label></div></div></div>
+
+  <div class="card" style="margin-bottom:16px"><h3>Send reminders</h3>
+   <div class="tools" style="margin:0 0 14px"><button class="btn" data-act="sendNow">Send reminder email now</button><button class="btn o" data-act="sendTest">Send a test email</button>
+   <span class="muted small">${s.ejsLast?'Last sent: '+esc(s.ejsLast):'Not sent yet'}</span></div>
+   ${alertsHtml(al)}</div>
+
+  <div class="card prose" style="margin-bottom:16px"><h3>EmailJS template</h3>
+   <p>Create the template once in your EmailJS dashboard, then paste its IDs into the EMAILJS SETTINGS block at the top of the code.</p>
+   <ul><li>Sign up at emailjs.com, open <b>Email Services</b>, add your Gmail or other mailbox, and copy the <b>Service ID</b>.</li>
+   <li>Open <b>Email Templates</b>, create a template, and set <b>To Email</b> to <span class="tag" style="color:var(--ink)">{{to_email}}</span>.</li>
+   <li>Paste the subject and content below. In the content editor use the code view (&lt;&gt;) so the HTML is kept.</li>
+   <li>Save it and copy the <b>Template ID</b>. Copy your <b>Public Key</b> from <b>Account</b>.</li></ul>
+   <label class="lab" for="ejsSub">Subject</label><textarea id="ejsSub" rows="1" readonly>${esc(EJS_SUBJECT)}</textarea>
+   <label class="lab" for="ejsBody" style="margin-top:12px">Content</label><textarea id="ejsBody" class="mailbox" style="min-height:170px" readonly>${esc(EJS_BODY)}</textarea>
+   <div class="tools" style="margin:12px 0 16px"><button class="btn o" data-act="copyEjsSub">Copy subject</button><button class="btn" data-act="copyEjsBody">Copy content</button></div>
+   <p><b>Variables this system sends</b></p>
+   <div class="tw"><table><thead><tr><th>Variable</th><th>Contains</th></tr></thead><tbody>
+    <tr><td class="tag">to_email</td><td>Administrator email</td></tr><tr><td class="tag">to_name</td><td>Administrator name</td></tr>
+    <tr><td class="tag">subject</td><td>Email subject with the reminder count</td></tr><tr><td class="tag">count</td><td>Number of reminders</td></tr>
+    <tr><td class="tag">date</td><td>Today's date</td></tr><tr><td class="tag">company</td><td>${esc(COMPANY)}</td></tr>
+    <tr><td class="tag">reminders_html</td><td>The reminder list as HTML (use three braces)</td></tr><tr><td class="tag">reminders_text</td><td>The reminder list as plain text</td></tr></tbody></table></div></div>
+
+  <div class="card"><h3>Email preview</h3>
+   <textarea id="mailBody" class="mailbox" readonly>Subject: ${esc(m.subject)}\n\n${esc(m.body)}</textarea>
+   <div class="tools" style="margin:14px 0 0"><a id="mailGo" class="btn o" href="${esc(m.href)}">Open in email app instead</a><button class="btn o" data-act="copyMail">Copy email text</button></div>
+   <p class="muted small" style="margin:12px 0 0">Sending needs an internet connection. Automatic sending runs when someone opens the system, so for scheduled emails with nobody present you would need a server.</p></div>`;
+};
+
+/* ---------- dialogs ---------- */
+let onSubmit=null,onConfirm=null;
+function fld(label,name,type,val,opts,full){
+  let inp;
+  if(type==='select')inp=`<select id="f_${name}" name="${name}">${opts.map(o=>{const [v,t]=Array.isArray(o)?o:[o,o];return `<option value="${esc(v)}"${String(v)===String(val)?' selected':''}>${esc(t)}</option>`}).join('')}</select>`;
+  else if(type==='textarea')inp=`<textarea id="f_${name}" name="${name}" rows="2">${esc(val)}</textarea>`;
+  else inp=`<input id="f_${name}" name="${name}" type="${type}" value="${esc(val)}">`;
+  return `<div class="${full?'full':''}"><label for="f_${name}">${label}</label>${inp}</div>`;
+}
+function openModal(title,html,fn,okText){$('#dTitle').textContent=title;$('#dBody').innerHTML=html;$('#dErr').textContent='';$('#dOk').textContent=okText||'Save';onSubmit=fn;$('#dlg').showModal()}
+$('#frm').addEventListener('submit',e=>{e.preventDefault();const data=Object.fromEntries(new FormData($('#frm')).entries());
+  const err=onSubmit&&onSubmit(data);if(err){$('#dErr').textContent=err;return}$('#dlg').close();save();render()});
+$('#dCancel').onclick=$('#dClose').onclick=()=>$('#dlg').close();
+function ask(msg,label,fn){$('#cMsg').textContent=msg;$('#cOk').textContent=label||'Confirm';onConfirm=fn;$('#cdlg').showModal()}
+$('#cNo').onclick=()=>$('#cdlg').close();
+$('#cOk').onclick=()=>{$('#cdlg').close();if(onConfirm)onConfirm();save();render()};
+$('#tClose').onclick=()=>$('#tdlg').close();
+async function copyText(text,label){
+  try{await navigator.clipboard.writeText(text);toast(label+' copied to the clipboard.')}
+  catch(e){$('#tTitle').textContent=label;$('#tArea').value=text;$('#tdlg').showModal();$('#tArea').select()}
+}
+const userOpts=()=>[['','None'],...DB.users.map(u=>[u.id,`${u.name} (${u.dept})`])];
+const assetOpts=()=>DB.assets.map(a=>[a.id,`${a.id} · ${a.name}`]);
+
+function assetForm(a){
+  const n=!a;a=a||{name:'',category:'Laptop',serial:'',purchaseDate:off(0),warrantyEnd:off(365),nextMaint:off(180),cost:'',status:'Available',assignedTo:'',notes:''};
+  openModal(n?'Register asset':'Edit '+a.id,
+    fld('Asset name','name','text',a.name,0,1)+fld('Category','category','select',a.category,CATS)+fld('Serial number','serial','text',a.serial)+
+    fld('Purchase date','purchaseDate','date',a.purchaseDate)+fld('Warranty ends','warrantyEnd','date',a.warrantyEnd)+fld('Next maintenance','nextMaint','date',a.nextMaint)+
+    fld('Cost (USD)','cost','number',a.cost)+fld('Status','status','select',a.status,STATUSES)+fld('Assigned to','assignedTo','select',a.assignedTo,userOpts())+fld('Notes','notes','textarea',a.notes,0,1),
+    d=>{
+      if(!d.name.trim())return 'Enter the asset name.';
+      if(!d.serial.trim())return 'Enter the serial number.';
+      if(DB.assets.some(x=>x.serial===d.serial.trim()&&x!==a))return 'That serial number is already registered.';
+      if(d.status==='Assigned'&&!d.assignedTo)return 'Choose who the asset is assigned to.';
+      if(d.status==='Available'||d.status==='Retired')d.assignedTo='';
+      const rec={...(n?{id:nextId(DB.assets,'AST')}:a),...d,name:d.name.trim(),serial:d.serial.trim(),cost:Number(d.cost||0)};
+      if(n){DB.assets.push(rec);logIt(`${rec.name} registered`)}else{Object.assign(a,rec);logIt(`${a.name} updated`)}
+    },n?'Register':'Save changes');
+}
+function userForm(u){
+  const n=!u;u=u||{name:'',dept:'IT',email:''};
+  openModal(n?'Add user':'Edit '+u.id,fld('Full name','name','text',u.name,0,1)+fld('Department','dept','select',u.dept,DEPTS)+fld('Email','email','email',u.email),
+    d=>{if(!d.name.trim())return 'Enter the full name.';
+      if(n){DB.users.push({id:nextId(DB.users,'USR'),...d,name:d.name.trim()});logIt(`${d.name.trim()} added to ${d.dept}`)}else Object.assign(u,d,{name:d.name.trim()})},n?'Add user':'Save changes');
+}
+function maintForm(m,preset){
+  const n=!m;m=m||{assetId:preset||DB.assets[0]?.id,type:'Preventive',description:'',date:off(0),technician:'',cost:'',status:'Scheduled'};
+  openModal(n?'Log maintenance':'Edit '+m.id,
+    fld('Asset','assetId','select',m.assetId,assetOpts(),1)+fld('Type','type','select',m.type,MTYPES)+fld('Status','status','select',m.status,MSTAT)+
+    fld('Date','date','date',m.date)+fld('Cost (USD)','cost','number',m.cost)+fld('Technician','technician','text',m.technician,0,1)+fld('Work done or planned','description','textarea',m.description,0,1),
+    d=>{
+      if(!d.description.trim())return 'Describe the work.';
+      if(!d.technician.trim())return 'Enter the technician.';
+      const rec={...(n?{id:nextId(DB.maint,'MNT')}:m),...d,cost:Number(d.cost||0)};
+      if(n)DB.maint.push(rec);else Object.assign(m,rec);
+      const a=asset(rec.assetId);
+      if(a){
+        logIt(`${rec.type} ${rec.status.toLowerCase()} for ${a.name}: ${rec.description.trim()}`);
+        if(rec.status==='In Progress')a.status='Under Maintenance';
+        else if(rec.status==='Completed'&&a.status==='Under Maintenance'){a.status=a.assignedTo?'Assigned':'Available';
+          if(rec.type==='Preventive'){const x=new Date(rec.date);x.setDate(x.getDate()+180);a.nextMaint=iso(x)}}
+      }
+    },n?'Log it':'Save changes');
+}
+
+
+/* ---------- actions ---------- */
+const ACT={
+  mode:id=>{assetMode=id;render()},
+  addAsset:()=>assetForm(),editAsset:id=>assetForm(asset(id)),
+  delAsset:id=>{const a=asset(id);ask(`Delete ${a.name} (${id}) and its maintenance records? This cannot be undone.`,'Delete asset',()=>{
+    DB.assets=DB.assets.filter(x=>x!==a);DB.maint=DB.maint.filter(m=>m.assetId!==id);logIt(`${a.name} deleted`);location.hash='#assets'})},
+  assign:id=>{const a=asset(id);openModal('Assign '+a.name,fld('Assign to','assignedTo','select','',userOpts().slice(1),1),
+    d=>{a.assignedTo=d.assignedTo;a.status='Assigned';logIt(`${a.name} assigned to ${user(d.assignedTo).name}`)},'Assign')},
+  return:id=>{const a=asset(id);ask(`Return ${a.name} from ${user(a.assignedTo)?.name}?`,'Return asset',()=>{logIt(`${a.name} returned by ${user(a.assignedTo)?.name}`);a.assignedTo='';a.status='Available'})},
+  addUser:()=>userForm(),editUser:id=>userForm(user(id)),
+  delUser:id=>{const u=user(id);if(DB.assets.some(a=>a.assignedTo===id))return toast('Return this user\'s equipment before deleting them.');
+    ask(`Delete ${u.name}?`,'Delete user',()=>{DB.users=DB.users.filter(x=>x!==u);logIt(`${u.name} removed`)})},
+  addMaint:id=>maintForm(null,id),editMaint:id=>maintForm(DB.maint.find(m=>m.id===id)),
+  delMaint:id=>ask('Delete maintenance record '+id+'?','Delete record',()=>{DB.maint=DB.maint.filter(m=>m.id!==id)}),
+  exportData:()=>{const d={assets:DB.assets,users:DB.users,maint:DB.maint,log:DB.log};
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,1)],{type:'application/json'}));a.download='asset-data-'+iso(new Date())+'.json';document.body.appendChild(a);a.click();a.remove();toast('Data file downloaded.')},
+  importData:()=>$('#impFile').click(),
+  sendNow:()=>sendReminder(),sendTest:()=>sendReminder({test:true}),
+  copyEjsSub:()=>copyText(EJS_SUBJECT,'Subject'),copyEjsBody:()=>copyText(EJS_BODY,'Template content'),
+  copyMail:()=>{const m=mailText();copyText('Subject: '+m.subject+'\n\n'+m.body,'Reminder email')},
+  csvAssets:()=>copyText(csvOf(['ID','Name','Category','Serial','Status','Assigned To','Department','Purchase Date','Warranty End','Next Maintenance','Cost'],
+    DB.assets.map(a=>{const u=user(a.assignedTo);return [a.id,a.name,a.category,a.serial,a.status,u?.name||'',u?.dept||'',a.purchaseDate,a.warrantyEnd,a.nextMaint,a.cost]})),'Assets CSV'),
+  csvMaint:()=>copyText(csvOf(['ID','Asset','Type','Description','Date','Technician','Cost','Status'],DB.maint.map(m=>[m.id,m.assetId,m.type,m.description,m.date,m.technician,m.cost,m.status])),'Maintenance CSV')
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&ACT[b.dataset.act]){e.preventDefault();ACT[b.dataset.act](b.dataset.id)}});
+document.addEventListener('input',e=>{
+  if(['q','fc','fs'].includes(e.target.id))assetOut();if(e.target.id==='fm')maintRows();
+  if(e.target.dataset&&e.target.dataset.set){DB.settings[e.target.dataset.set]=e.target.value;save();refreshMail()}
+});
+document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.cb;if(k){DB.settings[k]=e.target.checked;save()}});
+$('#reset').onclick=()=>ask('Replace all data with the sample data?','Reset data',()=>{const st=DB.settings;DB=seed();DB.settings=st;location.hash='#dashboard'});
+$('#impFile').addEventListener('change',e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  const r=new FileReader();r.onload=()=>{let d;try{d=JSON.parse(r.result)}catch(x){return toast('That file is not a valid data file.')}
+    if(!d||!Array.isArray(d.assets)||!Array.isArray(d.users)||!Array.isArray(d.maint))return toast('That file is not an asset data file.');
+    ask(`Replace the data in this browser with the file (${d.assets.length} assets, ${d.users.length} users, ${d.maint.length} maintenance records)?`,'Load data',()=>{
+      DB.assets=d.assets;DB.users=d.users;DB.maint=d.maint;DB.log=Array.isArray(d.log)?d.log:[];location.hash='#dashboard'});};
+  r.readAsText(f)});
+$('#theme').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'};
+
+/* ---------- router ---------- */
+const TITLES={dashboard:['Dashboard','Overview of ICT equipment, status and upkeep'],assets:['Assets','Register, search and manage every device'],
+  users:['Users and assignment','Who holds which equipment'],departments:['Departments','Equipment and people by department'],
+  maintenance:['Maintenance','Repairs, services and scheduled work'],warranty:['Warranty tracker','Coverage and renewal dates, soonest first'],
+  activity:['Activity log','What changed and when'],reports:['Reports','Summaries you can copy into a spreadsheet'],
+  email:['Email reminders','Prepare the reminder email for the administrator']};
+function render(){
+  const h=location.hash.slice(1);let v=h,id=null;
+  if(h.startsWith('asset-')){v='asset';id=h.slice(6)}else if(!V[h])v='dashboard';
+  const a=id&&asset(id);
+  $('#nav').innerHTML=NAV.map(n=>`<a href="#${n[0]}" class="${(v===n[0]||(v==='asset'&&n[0]==='assets'))?'on':''}"${v===n[0]?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${n[2]}</svg>${n[1]}</a>`).join('');
+  $('#title').textContent=v==='asset'?(a?a.name:'Asset not found'):TITLES[v][0];
+  $('#subtitle').textContent=v==='asset'?(a?`${a.id} · ${a.category}`:''):TITLES[v][1];
+  $('#view').innerHTML=V[v](id);
+  if(v==='assets')assetOut();if(v==='maintenance')maintRows();
+}
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
+load();render();
+if(DB.settings.ejsAuto&&DB.settings.ejsLast!==iso(new Date()))sendReminder({auto:true});
+</script>
+</body>
+</html>
